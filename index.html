@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08111d">
+  <meta name="description" content="Bảng điều khiển nghiên cứu độc lập Cloudflare PHP CTF: phạm vi, luồng phòng thủ và kiểm thử request offline.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>PHP CTF Research Lab — Independent Demo</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="identity" href="#overview" aria-label="PHP CTF research lab home"><span class="identity-mark">{ }</span><span><strong>PHP<span class="mark-accent">CTF</span></strong><small>RESEARCH LAB</small></span></a>
+      <nav class="nav-main" aria-label="Điều hướng chính"><a href="#overview">Tổng quan</a><a href="#architecture">Kiến trúc</a><a href="#workbench">Workbench</a><a href="#research">Nghiên cứu</a></nav>
+      <a class="header-link" href="https://php-rce.cloudflare.app/" target="_blank" rel="noopener noreferrer">CTF chính thức <span aria-hidden="true">↗</span></a>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Mở điều hướng" aria-expanded="false">☰</button>
+    </div>
+    <div class="mobile-nav" id="mobile-nav" hidden><a href="#overview">Tổng quan</a><a href="#architecture">Kiến trúc</a><a href="#workbench">Workbench</a><a href="#research">Nghiên cứu</a></div>
+  </header>
+  <main id="overview" class="shell">
+    <div class="notice"><span class="pulse-dot"></span><span><strong>INDEPENDENT RESEARCH DEMO</strong> — Website mô phỏng phục vụ học tập, không thuộc hoặc đại diện Cloudflare. Không gửi request khai thác từ trình duyệt.</span><span class="notice-utc">29 OCT 2026</span></div>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="tiny-bracket">[</span> SECURITY RESEARCH · LAB 001 <span class="tiny-bracket">]</span></div>
+        <h1 id="hero-title">Break the <span class="text-outline">rules.</span><br><span class="text-gradient">Understand the defense.</span></h1>
+        <p class="hero-desc">Khám phá kiến trúc thử thách PHP Capture the Flag: <strong>PHP 8.5.11</strong>, Apache 2, WAF và hai CVE thuộc nhóm <em>php2shell</em>. Tất cả thao tác trong demo đều chạy offline.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="#workbench">Mở workbench <span aria-hidden="true">↗</span></a><a class="btn btn-outline" href="https://blog.cloudflare.com/php-ctf/" target="_blank" rel="noopener noreferrer">Đọc thông báo gốc <span aria-hidden="true">↗</span></a></div>
+        <div class="hero-metadata"><span><span class="circle green"></span> Local-only simulation</span><span>2026 · WAF Research</span><span>Not affiliated</span></div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="scan-halo"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="central-icon"><svg viewBox="0 0 120 136" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60 4 113 24v43c0 34-20 52-53 65C27 119 7 101 7 67V24L60 4Z" fill="#111f32" stroke="#f5a74d" stroke-width="2.5"/><path d="m42 58-16 12 16 12M78 58l16 12-16 12M68 48 52 92" stroke="#ffd19b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="icon-glow"></div></div>
+        <span class="floating-label label-top"><i></i> REQUEST / POST</span><span class="floating-label label-bottom">WAF <b>ACTIVE</b><i></i></span>
+        <div class="radar-lines"></div>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="Thông tin môi trường">
+      <article class="metric"><div class="metric-icon">⌘</div><div><span class="metric-label">RUNTIME</span><div class="metric-value">PHP <b>8.5.11</b></div><span class="metric-foot">Vulnerable challenge build</span></div></article>
+      <article class="metric"><div class="metric-icon">⬡</div><div><span class="metric-label">WEB SERVER</span><div class="metric-value">Apache <b>2</b></div><span class="metric-foot">mod_php · container</span></div></article>
+      <article class="metric"><div class="metric-icon">⛨</div><div><span class="metric-label">PROTECTION</span><div class="metric-value">WAF <b>Enabled</b></div><span class="metric-foot">Cloudflare challenge</span></div></article>
+      <article class="metric"><div class="metric-icon">◇</div><div><span class="metric-label">SCOPE</span><div class="metric-value"><b>POST</b> /php/*</div><span class="metric-foot">Official host only</span></div></article>
+    </section>
+
+    <section class="section architecture-section" id="architecture">
+      <div class="section-heading"><div><p class="kicker">01 / ATTACK SURFACE</p><h2>Hiểu đường đi của request</h2><p>Minh họa pipeline phòng thủ của thử thách. Đây là sơ đồ khái niệm, không phải sơ đồ mạng nội bộ được xác nhận.</p></div><span class="section-counter">SYSTEM MAP / 01</span></div>
+      <div class="architecture-grid">
+        <div class="diagram-panel">
+          <div class="panel-toolbar"><span><i class="led"></i> REQUEST FLOW / CONCEPT</span><span>HTTP(S)</span></div>
+          <div class="flow-stage"><div class="node node-client"><span class="node-icon">⌘</span><div><strong>Research client</strong><small>Authorized POST · /php/*</small></div><span class="node-tag">01</span></div><div class="node-line"><span>REQUEST</span></div><div class="node node-waf"><span class="node-icon">⛨</span><div><strong>Cloudflare WAF</strong><small>Default protections active</small></div><span class="node-tag node-tag-warn">02</span></div><div class="node-line"><span>IF ALLOWED</span></div><div class="node node-server"><span class="node-icon">◇</span><div><strong>Apache + PHP 8.5.11</strong><small>Isolated contest container</small></div><span class="node-tag">03</span></div></div>
+          <div class="diagram-footer"><span>↳ sandbox flag resets periodically</span><span class="mono">MODEL ≠ LIVE TOPOLOGY</span></div>
+        </div>
+        <div class="architecture-insights">
+          <div class="insight"><span class="insight-num">01</span><div><strong>Giới hạn truy cập</strong><p>Chỉ máy chủ thử thách và đường dẫn <code>/php/*</code> qua POST nằm trong phạm vi được cho phép đối với thử nghiệm khai thác.</p></div></div>
+          <div class="insight"><span class="insight-num">02</span><div><strong>WAF không thay thế bản vá</strong><p>Bộ lọc request giúp giảm nguy cơ nhưng không làm mất đi lỗi trong runtime PHP. Các hệ thống thực cần cập nhật phiên bản an toàn.</p></div></div>
+          <div class="insight"><span class="insight-num">03</span><div><strong>Kết quả hợp lệ cần cả chuỗi</strong><p>CTF đòi hỏi thực thi mã có kiểm chứng, lấy được <code>/flag</code>, xác minh thành công và báo cáo riêng theo quy định.</p></div></div>
+          <a class="insight-reference" target="_blank" rel="noopener noreferrer" href="https://php-rce.cloudflare.app/">Xem yêu cầu chính thức <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section workbench-section" id="workbench">
+      <div class="section-heading"><div><p class="kicker">02 / SAFE WORKBENCH</p><h2>Thử nghiệm request mẫu</h2><p>Trình dựng lệnh curl minh họa — <strong>không có mạng, không có exploit.</strong> Nội dung được tạo ngay trong trình duyệt.</p></div><span class="section-counter">SANDBOX / OFFLINE</span></div>
+      <div class="workbench-grid">
+        <div class="workbench-main">
+          <div class="panel-toolbar"><span><i class="led green-led"></i> OFFLINE COMMAND BUILDER</span><span>READ-ONLY</span></div>
+          <div class="form-area">
+            <div class="form-top"><label for="scenario">Mẫu nghiên cứu</label><span class="safety-pill">● NO NETWORK REQUESTS</span></div>
+            <select id="scenario"><option value="probe">Ví dụ upload-progress (Cloudflare)</option><option value="scope">Kiểm tra scope / phạm vi</option><option value="patch">Checklist cập nhật PHP</option></select>
+            <div class="field-row"><div><label for="endpoint">Endpoint minh họa</label><input id="endpoint" value="https://php-rce.cloudflare.app/php/index.php" readonly></div><div><label for="request-method">HTTP method</label><input id="request-method" value="POST" readonly></div></div>
+            <div class="code-top"><span><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green-dot"></span> command.txt</span><span>OFFLINE / EXAMPLE</span></div>
+            <pre class="code-display"><code id="command-output" aria-live="polite">Loading local example…</code></pre>
+            <div class="command-footer"><span>Chỉ tạo chuỗi mẫu, không thực thi.</span><button id="copy-command" type="button" class="btn btn-copy">Sao chép lệnh <span aria-hidden="true">⧉</span></button></div>
+            <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <aside class="workbench-aside">
+          <div class="aside-head"><span>RESEARCH STATUS</span><span class="status-light"></span></div>
+          <div class="status-big">5<span>/5</span></div><p class="aside-description">Bài kiểm thử ban đầu đã vượt qua trên WIN11-181. Kết quả này chỉ xác thực mã nghiên cứu offline, không chứng minh khai thác.</p>
+          <div class="status-rows"><div><span>Local QA</span><b class="pass">PASS</b></div><div><span>Scope guard</span><b class="pass">ACTIVE</b></div><div><span>Live exploit</span><b class="pending">NOT TESTED</b></div><div><span>Flag verified</span><b class="pending">NO</b></div></div>
+          <div class="aside-note">◈ Chỉ tiến hành kiểm thử trực tiếp sau khi chấp nhận đầy đủ điều khoản HackerOne và Cloudflare.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section research-section" id="research">
+      <div class="section-heading"><div><p class="kicker">03 / FIELD NOTES</p><h2>Nguồn và quy trình</h2><p>Các mốc nghiên cứu và tài nguyên công khai, không chứa dữ liệu bí mật của sandbox.</p></div><span class="section-counter">NOTES / 2026</span></div>
+      <div class="research-grid">
+        <article class="research-card"><span class="research-index">01 / OFFICIAL</span><div class="card-glyph">↗</div><h3>Cloudflare PHP CTF</h3><p>Thông tin môi trường, quy tắc chương trình, xác minh flag và phạm vi được cho phép.</p><a target="_blank" rel="noopener noreferrer" href="https://php-rce.cloudflare.app/">Trang thử thách <span>↗</span></a></article>
+        <article class="research-card"><span class="research-index">02 / SECURITY</span><div class="card-glyph">⛨</div><h3>PHP2Shell & WAF</h3><p>Bản tin phân tích các CVE PHP và cách Cloudflare giảm thiểu rủi ro.</p><a target="_blank" rel="noopener noreferrer" href="https://blog.cloudflare.com/php-vulnerabilities-waf-protection/">Đọc bản tin <span>↗</span></a></article>
+        <article class="research-card"><span class="research-index">03 / PRACTICE</span><div class="card-glyph">⌘</div><h3>Private Research Repo</h3><p>Workspace Node.js, kiểm thử phạm vi và tư liệu thực nghiệm trên WIN11-181.</p><a target="_blank" rel="noopener noreferrer" href="https://github.com/trinhtanphat/cloudflare-php-ctf-research">GitHub (yêu cầu quyền truy cập) <span>↗</span></a></article>
+      </div>
+      <div class="rules"><span class="rules-icon">!</span><div><strong>Đây không phải trang kiểm tra flag.</strong><p>Để xác minh flag hoặc gửi báo cáo bug bounty, chỉ sử dụng website Cloudflare và HackerOne chính thức. Không nhập token, mật khẩu hay flag vào bản demo này.</p></div></div>
+    </section>
+  </main>
+  <footer class="footer"><div class="shell footer-content"><div><strong>PHP<span class="mark-accent">CTF</span></strong> <span>RESEARCH LAB</span></div><small>Independent educational reproduction based on publicly available information · No affiliation with Cloudflare</small><a href="#overview" aria-label="Quay lại đầu trang">↑ TOP</a></div></footer>
+</body>
+</html>
